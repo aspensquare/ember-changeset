@@ -451,9 +451,11 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
 
       if (validation === true || isSingleValidationArray) {
         this._deleteKey(ERRORS, key);
-        set(changes, key, value);
+        // set(changes, key, value);
+        changes[key] = value;
         this.notifyPropertyChange(CHANGES);
-        this.notifyPropertyChange(key);
+        // this.notifyPropertyChange(key);
+        this.notifyPropertyChange(key.split('.')[0]);
 
         return value;
       }
@@ -478,10 +480,47 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
       }
 
       if (changes.hasOwnProperty(key)) {
-        return get(changes, key);
+        return changes[key];
       }
 
-      return get(content, key);
+      const value = get(content, key);
+      const valueType = typeOf(value);
+
+      const self = this;
+
+      if (valueType === 'object') {
+        // using closures so that no properties are defined on the proxy classes
+        const ChangesetObjectProxy = Ember.Object.extend({
+          unknownProperty(nextKey) {
+            return self.unknownProperty(key + '.' + nextKey);
+          },
+          setUnknownProperty(nextKey, value) {
+            return self.setUnknownProperty(key + '.' + nextKey, value);
+          }
+        });
+        return ChangesetObjectProxy.create();
+      }
+      if (valueType === 'array') {
+        // arrays containing primitives not supported
+        // might be able to use a proxy for them
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
+        // https://github.com/GoogleChrome/proxy-polyfill
+        return Ember.ArrayProxy.create({
+          content: Ember.A(value),
+          objectAtContent: function(idx) {
+            const ChangesetArrayElementProxy = Ember.Object.extend({
+              unknownProperty(nextKey) {
+                return self.unknownProperty(key + '.' + idx + '.' + nextKey);
+              },
+              setUnknownProperty(nextKey, value) {
+                return self.setUnknownProperty(key + '.' + idx + '.' + nextKey, value);
+              }
+            });
+            return ChangesetArrayElementProxy.create();
+          }
+        });
+      }
+      return value;
     },
 
     /**
@@ -491,7 +530,8 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
      * @return {Void}
      */
     _notifyVirtualProperties() {
-      let rollbackKeys = [...keys(get(this, CHANGES)), ...keys(get(this, ERRORS))];
+      // let rollbackKeys = [...keys(get(this, CHANGES)), ...keys(get(this, ERRORS))];
+      let rollbackKeys = [...(keys(get(this, CHANGES)).map(k => k.split('.')[0])), ...keys(get(this, ERRORS))];
 
       for (let i = 0; i < rollbackKeys.length; i++) {
         this.notifyPropertyChange(rollbackKeys[i]);
