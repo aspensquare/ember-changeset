@@ -474,7 +474,7 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
         if (!isEqual(oldValue, value)) {
           // set(changes, key, value);
           changes[key] = value;
-        } else if (obj.hasOwnProperty(key)) {
+        } else if (key in obj) {
           delete changes[key];
         }
         this.notifyPropertyChange(CHANGES);
