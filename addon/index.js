@@ -103,7 +103,6 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
     setUnknownProperty(key, value) {
       let changesetOptions = get(this, OPTIONS);
       let skipValidate = get(changesetOptions, 'skipValidate');
-      
       if (skipValidate) {
         return this._setProperty(true, { key, value });
       }
@@ -480,6 +479,12 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
         this.notifyPropertyChange(CHANGES);
         // this.notifyPropertyChange(key);
         this.notifyPropertyChange(key.split('.')[0]);
+
+        let errors = get(this, ERRORS);
+        if (errors['__ember_meta__'] && errors['__ember_meta__']['values']) {
+          delete errors['__ember_meta__']['values'][key];
+          set(this, ERRORS, errors);
+        }
 
         return value;
       }
