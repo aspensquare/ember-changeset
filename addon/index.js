@@ -1,7 +1,8 @@
 import Ember from 'ember';
 import objectToArray from 'ember-changeset/utils/computed/object-to-array';
 import isEmptyObject from 'ember-changeset/utils/computed/is-empty-object';
-import objectEqual from 'ember-changeset/utils/computed/object-equal';
+// import objectEqual from 'ember-changeset/utils/computed/object-equal';
+import pathObjectEqual from 'ember-changeset/utils/computed/path-object-equal';
 import isPromise from 'ember-changeset/utils/is-promise';
 import isObject from 'ember-changeset/utils/is-object';
 import pureAssign from 'ember-changeset/utils/assign';
@@ -61,7 +62,7 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
     error: readOnly(ERRORS),
 
     isValid: isEmptyObject(ERRORS),
-    isPristine: objectEqual(CHANGES, CONTENT),
+    isPristine: pathObjectEqual(CHANGES, CONTENT),
     isInvalid: not('isValid').readOnly(),
     isDirty: not('isPristine').readOnly(),
 
@@ -293,9 +294,11 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
 
       this._deleteKey(CHANGES, key);
       this.notifyPropertyChange(ERRORS);
-      this.notifyPropertyChange(key);
+      // this.notifyPropertyChange(key);
+      this.notifyPropertyChange(key.split('.')[0]);
 
-      return set(errors, key, options);
+      // return set(errors, key, options);
+      return errors[key] = options;
     },
 
     /**
@@ -308,7 +311,8 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
      */
     pushErrors(key, ...newErrors) {
       let errors = get(this, ERRORS);
-      let existingError = get(errors, key) || { validation: [] };
+      // let existingError = get(errors, key) || { validation: [] };
+      let existingError = errors[key] || { validation: [] };
       let { validation } = existingError;
       let value = get(this, key);
 
@@ -320,9 +324,11 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
 
       this._deleteKey(CHANGES, key);
       this.notifyPropertyChange(ERRORS);
-      this.notifyPropertyChange(key);
+      // this.notifyPropertyChange(key);
+      this.notifyPropertyChange(key.split('.')[0]);
 
-      return set(errors, key, { value, validation });
+      // return set(errors, key, { value, validation });
+      return errors[key] = { value, validation };
     },
 
     /**
@@ -476,7 +482,8 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
       let content = get(this, CONTENT);
 
       if (errors.hasOwnProperty(key)) {
-        return get(errors, `${key}.value`);
+        // return get(errors, `${key}.value`);
+        return errors[key].value;
       }
 
       if (changes.hasOwnProperty(key)) {
@@ -488,7 +495,7 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
 
       const self = this;
 
-      if (valueType === 'object') {
+      if (valueType === 'object'|| valueType === 'instance') {
         // using closures so that no properties are defined on the proxy classes
         const ChangesetObjectProxy = Ember.Object.extend({
           unknownProperty(nextKey) {
