@@ -74,7 +74,7 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
 
     isValid: isEmptyObject(ERRORS),
     isPristine: pathObjectEqual(CHANGES, CONTENT),
-    isPristine: isEmptyObject(CHANGES),
+    // isPristine: isEmptyObject(CHANGES),
     isInvalid: not('isValid').readOnly(),
     isDirty: not('isPristine').readOnly(),
 
