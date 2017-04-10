@@ -591,6 +591,7 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
         // https://github.com/GoogleChrome/proxy-polyfill
         return Ember.ArrayProxy.create({
           content: Ember.A(value),
+          length: value.length,
           objectAtContent: function(idx) {
             const ChangesetArrayElementProxy = Ember.Object.extend({
               unknownProperty(nextKey) {
