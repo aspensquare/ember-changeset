@@ -55,7 +55,7 @@ const defaultOptions = { skipValidate: false };
  * @return {Ember.Object}
  */
 export function changeset(obj, validateFn = defaultValidatorFn, validationMap = {}, options = {}) {
-  assert('Underlying object for changeset is missing', isPresent(obj));
+  assert('Underlying object for changeset is missing', (isPresent(obj) || isArray(obj)));
 
   return EmberObject.extend(Evented, {
     /**
