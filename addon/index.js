@@ -500,7 +500,9 @@ export function changeset(obj, validateFn = defaultValidatorFn, validationMap = 
       if (validation === true || isSingleValidationArray) {
         this._deleteKey(ERRORS, key);
 
-        if (!isEqual(oldValue, value)) {
+        // Don't try to compare the ArrayProxy
+        // We are giving up looking for changes at the array level, only on complex objects within the array (possibly)
+        if (!isArray(value) && !isEqual(oldValue, value)) {
           // set(changes, key, value);
           changes[key] = value;
           // } else if (key in obj) { 
